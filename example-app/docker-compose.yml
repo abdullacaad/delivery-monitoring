@@ -1,0 +1,23 @@
+# Stand-in for an application your pipeline deploys. Replace `image` with your own.
+# The only things monitoring needs are: the shared network + the monitoring.* labels.
+services:
+  shop-api:
+    image: quay.io/brancz/prometheus-example-app:v0.3.0   # exposes /metrics on :8080
+    container_name: shop-api
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+    labels:
+      monitoring.scrape: "true"
+      monitoring.port: "8080"
+      monitoring.path: "/metrics"
+      monitoring.app: "shop-api"
+      monitoring.env: "${DEPLOY_ENV:-staging}"
+      monitoring.version: "${APP_VERSION:-v0.3.0}"
+    networks: [monitoring]
+
+networks:
+  monitoring:
+    external: true

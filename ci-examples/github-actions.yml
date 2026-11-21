@@ -1,0 +1,36 @@
+# .github/workflows/deploy.yml  (excerpt - add the two monitoring steps to your own deploy job)
+name: deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      APP: shop-api
+      VERSION: ${{ github.sha }}
+      GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+      GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+      ALERTMANAGER_URL: ${{ secrets.ALERTMANAGER_URL }}
+      PROMETHEUS_URL: ${{ secrets.PROMETHEUS_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1) Mark the deploy on Grafana and mute expected restart noise
+      - name: Announce deploy
+        run: |
+          ./scripts/notify-deploy.sh --app "$APP" --version "${VERSION:0:8}" --env production \
+            --commit "$GITHUB_SHA" \
+            --pipeline-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --silence-minutes 5
+
+      # 2) Your existing deploy step (must label the container: see README)
+      - name: Deploy
+        run: |
+          # e.g. ssh $HOST "APP_VERSION=${VERSION:0:8} DEPLOY_ENV=production docker compose up -d"
+          echo "deploy here"
+
+      # 3) Fail the pipeline if the app is not healthy per Prometheus
+      - name: Verify health in Prometheus
+        run: ./scripts/verify-deploy.sh "$APP" 120
