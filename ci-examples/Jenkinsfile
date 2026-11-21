@@ -1,0 +1,22 @@
+// Jenkinsfile (excerpt)
+pipeline {
+  agent any
+  environment {
+    APP = 'shop-api'
+    GRAFANA_URL = credentials('grafana-url')
+    GRAFANA_TOKEN = credentials('grafana-token')
+    ALERTMANAGER_URL = credentials('alertmanager-url')
+    PROMETHEUS_URL = credentials('prometheus-url')
+  }
+  stages {
+    stage('Announce') {
+      steps { sh './scripts/notify-deploy.sh --app $APP --version $GIT_COMMIT --env production --pipeline-url $BUILD_URL --silence-minutes 5' }
+    }
+    stage('Deploy') {
+      steps { sh './deploy.sh' }          // your existing deploy
+    }
+    stage('Verify') {
+      steps { sh './scripts/verify-deploy.sh $APP 120' }
+    }
+  }
+}

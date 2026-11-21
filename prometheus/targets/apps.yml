@@ -1,0 +1,7 @@
+# Non-Docker targets. Example (uncomment and edit):
+#
+# - targets: ["10.0.0.12:9100"]
+#   labels:
+#     app: legacy-billing
+#     env: production
+[]

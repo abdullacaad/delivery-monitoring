@@ -1,0 +1,49 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default
+  # One notification per app, not one per alert
+  group_by: [alertname, app]
+  group_wait: 20s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: [severity="critical"]
+      receiver: critical
+      group_wait: 10s
+      repeat_interval: 1h
+
+# A critical alert mutes the matching warning for the same app
+inhibit_rules:
+  - source_matchers: [severity="critical"]
+    target_matchers: [severity="warning"]
+    equal: [app]
+
+receivers:
+  # Demo receivers: POST to the webhook-echo container.
+  # Watch with:  docker compose logs -f webhook-echo
+  - name: default
+    webhook_configs:
+      - url: http://webhook-echo:8080/alerts/default
+        send_resolved: true
+
+  - name: critical
+    webhook_configs:
+      - url: http://webhook-echo:8080/alerts/critical
+        send_resolved: true
+    # Swap in a real channel, e.g. Slack:
+    # slack_configs:
+    #   - api_url: https://hooks.slack.com/services/XXX/YYY/ZZZ
+    #     channel: "#deployments"
+    #     send_resolved: true
+    #     title: "{{ .CommonAnnotations.summary }}"
+    #     text: "{{ .CommonAnnotations.description }}"
+    #
+    # or email:
+    # email_configs:
+    #   - to: oncall@example.com
+    #     from: alerts@example.com
+    #     smarthost: smtp.example.com:587
+    #     auth_username: alerts@example.com
+    #     auth_password: <secret>

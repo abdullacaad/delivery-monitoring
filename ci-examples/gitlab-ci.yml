@@ -1,0 +1,11 @@
+# .gitlab-ci.yml (excerpt)
+deploy:
+  stage: deploy
+  variables:
+    APP: shop-api
+  script:
+    - ./scripts/notify-deploy.sh --app "$APP" --version "${CI_COMMIT_SHORT_SHA}" --env production
+        --commit "$CI_COMMIT_SHA" --pipeline-url "$CI_PIPELINE_URL" --silence-minutes 5
+    - ./deploy.sh                          # your existing deploy
+    - ./scripts/verify-deploy.sh "$APP" 120
+  # Needs masked CI/CD variables: GRAFANA_URL, GRAFANA_TOKEN, ALERTMANAGER_URL, PROMETHEUS_URL
